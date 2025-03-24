@@ -38,6 +38,6 @@
     </context-param>
     <context-param>
         <param-name>javax.faces.CONFIG_FILES</param-name>
-        <param-value>/dashboard.xhtml.xml</param-value>
+        <param-value>/dashboard.xhtml.xml,/WEB-INF/createPost.xhtml.xml,/createPost.xml</param-value>
     </context-param>
 </web-app>
