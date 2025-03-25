@@ -25,6 +25,18 @@ public class AuthController implements Serializable {
     public String getPassword() { return password; }
     public void setPassword(String password) { this.password = password; }
 
+    // Xử lý đăng nhập
+    public String login() {
+        User user = userDAO.getUserByUsernameAndPassword(username, password);
+        if (user != null) {
+            FacesContext.getCurrentInstance().getExternalContext().getSessionMap().put("loggedInUser", user);
+            return "dashboard?faces-redirect=true"; // Chuyển hướng đến trang chào mừng
+        } else {
+            FacesContext.getCurrentInstance().addMessage(null, new FacesMessage(FacesMessage.SEVERITY_ERROR, "Đăng nhập thất bại!", "Tên đăng nhập hoặc mật khẩu không đúng."));
+            return null;
+        }
+    }
+
     // Xử lý đăng ký
     public String register() {
         boolean success = userDAO.registerUser(username, password); // Dùng JDBC để đăng ký
@@ -37,17 +49,7 @@ public class AuthController implements Serializable {
         }
     }
 
-    // Xử lý đăng nhập
-    public String login() {
-        User user = userDAO.getUserByUsernameAndPassword(username, password);
-        if (user != null) {
-            FacesContext.getCurrentInstance().getExternalContext().getSessionMap().put("loggedInUser", user);
-            return "dashboard?faces-redirect=true"; // Chuyển hướng đến trang chào mừng
-        } else {
-            FacesContext.getCurrentInstance().addMessage(null, new FacesMessage(FacesMessage.SEVERITY_ERROR, "Đăng nhập thất bại!", "Tên đăng nhập hoặc mật khẩu không đúng."));
-            return null;
-        }
-    }
+
 
     public String logout() {
         FacesContext.getCurrentInstance().getExternalContext().invalidateSession();
