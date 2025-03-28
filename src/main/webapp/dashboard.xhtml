@@ -9,6 +9,24 @@
     <h1>Chào mừng tới Trang quản lý bài viết và nội dung</h1>
 
     <h:form>
+        <h:panelGrid columns="2">
+            <h:outputLabel for="searchUsername" value="Nhập username:" />
+            <h:inputText id="searchUsername" value="#{authController.searchUsername}"
+                         required="true" requiredMessage="Vui lòng nhập username!" />
+
+            <h:commandButton value="Tìm kiếm" action="#{authController.searchUser}" />
+        </h:panelGrid>
+    </h:form>
+
+    <!-- Hiển thị thông tin nếu tìm thấy -->
+    <h:panelGroup rendered="#{not empty authController.searchUser}">
+        <h:panelGrid columns="2" border="1">
+            <h:outputText value="Username:" />
+            <h:outputText value="#{authController.searchUser.username}" />
+        </h:panelGrid>
+    </h:panelGroup>
+
+    <h:form>
         <h:commandButton value="Thêm bài viết" action="createPost.xhtml?faces-redirect=true" />
     </h:form>
 

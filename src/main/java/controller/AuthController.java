@@ -14,16 +14,40 @@ import model.User;
 public class AuthController implements Serializable {
     private String username;
     private String password;
+    private User searchUser;
+    private String searchUsername;
 
     @Inject
     private UserDAO userDAO;
 
     // Getter & Setter
-    public String getUsername() { return username; }
-    public void setUsername(String username) { this.username = username; }
+    public String getUsername() {
+        return username;
+    }
 
-    public String getPassword() { return password; }
-    public void setPassword(String password) { this.password = password; }
+    public void setUsername(String username) {
+        this.username = username;
+    }
+
+    public String getPassword() {
+        return password;
+    }
+
+    public void setPassword(String password) {
+        this.password = password;
+    }
+
+    public String getSearchUsername() {
+        return searchUsername;
+    }
+
+    public void setSearchUsername(String searchUsername) {
+        this.searchUsername = searchUsername;
+    }
+
+    public User getSearchUser() {
+        return searchUser;
+    }
 
     // Xử lý đăng nhập
     public String login() {
@@ -49,12 +73,19 @@ public class AuthController implements Serializable {
         }
     }
 
-
-
     public String logout() {
         FacesContext.getCurrentInstance().getExternalContext().invalidateSession();
         return "login?faces-redirect=true"; // Chuyển về trang đăng nhập
     }
 
+    // Phương thức tìm kiếm người dùng
+    public void searchUser() {
+        searchUser = userDAO.getUserByUsername(searchUsername);
+        if (searchUser == null) {
+            FacesContext.getCurrentInstance().addMessage(null,
+                    new FacesMessage(FacesMessage.SEVERITY_WARN, "Không tìm thấy người dùng!", ""));
+        }
 
+
+    }
 }
