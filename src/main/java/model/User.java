@@ -1,26 +1,30 @@
 package model;
+import jakarta.persistence.*;
 
+
+@Entity
+@Table (name = "users")
 public class User {
-    private Long id;
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private int id;
+
+    @Column(nullable = false, unique = true)
     private String username;
+
+    @Column(nullable = false)
     private String password;
+
+    @Column(nullable = false)
     private String role;
-
-    // Constructor mặc định
-    public User() {}
-
-    // Constructor có tham số
-    public User(String username, String password) {
-        this.username = username;
-        this.password = password;
-    }
 
     // Getter & Setter
     public long getId() {
         return id;
     }
 
-    public void setId(long id) {
+    public void setId(int id) {
         this.id = id;
     }
 

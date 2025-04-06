@@ -1,97 +1,70 @@
 package dao;
 
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import utils.DatabaseConnection;
-import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.PersistenceContext;
+import jakarta.persistence.TypedQuery;
 import model.User;
+import org.hibernate.Session;
+import org.hibernate.Transaction;
+import org.hibernate.query.Query;
+import utils.HibernateUtil;
 
-@ApplicationScoped
 public class UserDAO {
-    public boolean checkUserExists(String username) {
-        String query = "SELECT COUNT(*) FROM users WHERE username = ?";
-        try (Connection conn = DatabaseConnection.getConnection();
-             PreparedStatement stmt = conn.prepareStatement(query)) {
-            stmt.setString(1, username);
-            ResultSet rs = stmt.executeQuery();
-            if (rs.next()) {
-                return rs.getInt(1) > 0;
-            }
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
-        return false;
-    }
+    @PersistenceContext(unitName = "blogPU")
+    private EntityManager entityManager;
 
-    public boolean registerUser(String username, String password) {
-        String sql = "INSERT INTO users (username, password, role) VALUES (?, ?, ?)";
-        try (Connection conn = DatabaseConnection.getConnection();
-             PreparedStatement stmt = conn.prepareStatement(sql)) {
-            stmt.setString(1, username);
-            stmt.setString(2, password);
-            stmt.setString(3, "user"); // Thêm giá trị role
-            int rowsInserted = stmt.executeUpdate(); // Kiểm tra số dòng được thêm vào
-            return rowsInserted > 0; // Trả về true nếu thêm thành công
-        } catch (SQLException e) {
-            e.printStackTrace();
+    public User findUserByUsername(String username) {
+        try {
+            TypedQuery<User> query = entityManager.createQuery(
+                    "SELECT u FROM User u WHERE u.username = :username", User.class
+            );
+            query.setParameter("username", username);
+            return query.getSingleResult();
+        } catch (Exception e) {
+            return null;
         }
-        return false; // Trả về false nếu có lỗi
     }
 
     public User getUserByUsernameAndPassword(String username, String password) {
-        User user = null;
-        try (Connection conn = DatabaseConnection.getConnection()) {
-            String sql = "SELECT * FROM users WHERE username = ? AND password = ?";
-            PreparedStatement stmt = conn.prepareStatement(sql);
-            stmt.setString(1, username);
-            stmt.setString(2, password);
-            ResultSet rs = stmt.executeQuery();
-            if (rs.next()) {
-                user = new User();
-                user.setUsername(rs.getString("username"));
-                user.setPassword(rs.getString("password"));
-                user.setRole(rs.getString("role"));
-            }
-        } catch (SQLException e) {
-            e.printStackTrace();
+        try (Session session = HibernateUtil.getSessionFactory().openSession()) {
+            Query<User> query = session.createQuery("FROM User WHERE username = :u AND password = :p", User.class);
+            query.setParameter("u", username);
+            query.setParameter("p", password);
+            return query.uniqueResult();
         }
-        return user;
     }
 
-    public User findUserByUsername(String username) {
-        User user = null;
-        String sql = "SELECT * FROM users WHERE username = ?";
+    public boolean registerUser(String username, String password) {
+        Transaction transaction = null;
 
-        try (Connection conn = DatabaseConnection.getConnection();
-             PreparedStatement stmt = conn.prepareStatement(sql)) {
+        try (Session session = HibernateUtil.getSessionFactory().openSession()) {
+            transaction = session.beginTransaction();
 
-            stmt.setString(1, username);
-            ResultSet rs = stmt.executeQuery();
+            User user = new User();
+            user.setUsername(username);
+            user.setPassword(password);
 
-            if (rs.next()) {
-                user = new User();
-                user.setUsername(rs.getString("username"));
+            session.save(user);
+
+            transaction.commit();
+            return true;
+
+        } catch (Exception ex) {
+            if (transaction != null) {
+                transaction.rollback();
             }
-        } catch (Exception e) {
-            e.printStackTrace();
+            ex.printStackTrace();
+            return false;
         }
-        return user;
     }
+
 
     public User getUserByUsername(String username) {
-        String sql = "SELECT * FROM users WHERE username = ?";
-        try (Connection conn = DatabaseConnection.getConnection();
-             PreparedStatement stmt = conn.prepareStatement(sql)) {
-            stmt.setString(1, username);
-            ResultSet rs = stmt.executeQuery();
-            if (rs.next()) {
-                return new User(rs.getString("username"), rs.getString("password"));
-            }
-        } catch (SQLException e) {
-            e.printStackTrace();
+        try (Session session = HibernateUtil.getSessionFactory().openSession()) {
+            Query<User> query = session.createQuery("FROM User WHERE username = :u", User.class);
+            query.setParameter("u", username);
+            return query.uniqueResult();
         }
-        return null;
+
     }
 }

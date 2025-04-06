@@ -1,5 +1,7 @@
 package controller;
 
+import jakarta.enterprise.context.RequestScoped;
+import jakarta.servlet.http.HttpSession;
 import jakarta.enterprise.context.SessionScoped;
 import jakarta.faces.application.FacesMessage;
 import jakarta.faces.context.FacesContext;
@@ -10,15 +12,15 @@ import dao.UserDAO;  // Import UserDAO để dùng JDBC
 import model.User;
 
 @Named
-@SessionScoped
+@RequestScoped
 public class AuthController implements Serializable {
     private String username;
     private String password;
     private User searchUser;
     private String searchUsername;
 
-    @Inject
-    private UserDAO userDAO;
+
+    private UserDAO userDAO = new UserDAO();
 
     // Getter & Setter
     public String getUsername() {
@@ -51,26 +53,23 @@ public class AuthController implements Serializable {
 
     // Xử lý đăng nhập
     public String login() {
-        User user = userDAO.getUserByUsernameAndPassword(username, password);
-        if (user != null) {
-            FacesContext.getCurrentInstance().getExternalContext().getSessionMap().put("loggedInUser", user);
-            return "dashboard?faces-redirect=true"; // Chuyển hướng đến trang chào mừng
-        } else {
-            FacesContext.getCurrentInstance().addMessage(null, new FacesMessage(FacesMessage.SEVERITY_ERROR, "Đăng nhập thất bại!", "Tên đăng nhập hoặc mật khẩu không đúng."));
-            return null;
+        User user = userDAO.findUserByUsername(username);
+        if (user != null && user.getPassword().equals(password)) {
+            HttpSession session = (HttpSession) FacesContext.getCurrentInstance()
+                    .getExternalContext().getSession(true);
+            session.setAttribute("username", username);
+            return "welcome.xhtml?faces-redirect=true";
         }
+        return "login.xhtml?faces-redirect=true";
     }
 
     // Xử lý đăng ký
     public String register() {
-        boolean success = userDAO.registerUser(username, password); // Dùng JDBC để đăng ký
+        boolean success = userDAO.registerUser(username, password);
         if (success) {
-            FacesContext.getCurrentInstance().addMessage(null, new FacesMessage("Đăng ký thành công!"));
-            return "login.xhtml"; // Chuyển hướng đến trang đăng nhập
-        } else {
-            FacesContext.getCurrentInstance().addMessage(null, new FacesMessage("Đăng ký thất bại!"));
-            return null;
+            return "login.xhtml?faces-redirect=true";
         }
+        return "register.xhtml?faces-redirect=true";
     }
 
     public String logout() {

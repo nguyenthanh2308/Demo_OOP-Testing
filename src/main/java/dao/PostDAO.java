@@ -1,23 +1,44 @@
 package dao;
 
 import model.Post;
-import utils.DatabaseConnection;
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.SQLException;
+
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.EntityTransaction;
+import jakarta.persistence.TypedQuery;
+import utils.HibernateUtil;
+
+import java.util.List;
 
 public class PostDAO {
-    public void insertPost(Post post) {
-        String sql = "INSERT INTO posts (title, body, user_id, status, created_at) VALUES (?, ?, ?, ?, NOW())";
-        try (Connection conn = DatabaseConnection.getConnection();
-             PreparedStatement stmt = conn.prepareStatement(sql)) {
-            stmt.setString(1, post.getTitle());
-            stmt.setString(2, post.getBody());
-            stmt.setInt(3, 1); // Thay 1 bằng user_id thực tế
-            stmt.setString(4, "published");
-            stmt.executeUpdate();
-        } catch (SQLException e) {
+
+    private EntityManager entityManager;
+
+    public PostDAO() {
+        this.entityManager = HibernateUtil.getEntityManager();
+    }
+
+    public void addPost(Post post) {
+        EntityTransaction transaction = null;
+        try {
+            transaction = entityManager.getTransaction();
+            transaction.begin();
+            entityManager.persist(post);
+            transaction.commit();
+        } catch (Exception e) {
+            if (transaction != null && transaction.isActive()) {
+                transaction.rollback();
+            }
             e.printStackTrace();
+        }
+    }
+
+    public List<Post> getAllPosts() {
+        try {
+            TypedQuery<Post> query = entityManager.createQuery("SELECT p FROM Post p", Post.class);
+            return query.getResultList();
+        } catch (Exception e) {
+            e.printStackTrace();
+            return null;
         }
     }
 }
